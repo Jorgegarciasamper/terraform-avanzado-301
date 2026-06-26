@@ -1,26 +1,31 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
+module "naming" {
+  source      = "../../modules/naming"
+  project     = var.project
+  environment = var.environment
 }
 
-provider "aws" {
-  region = var.aws_region
+module "tags" {
+  source      = "../../modules/tagging"
+  project     = var.project
+  environment = var.environment
 }
 
-locals {
-  name_prefix = "${var.project}-${var.environment}"
+module "bucket" {
+  source      = "../../modules/s3"
 
-  common_tags = {
-    Project     = var.project
-    Environment = var.environment
-    Owner       = "equipo-dev"
-  }
+  bucket_name = "curso-${var.project}-${var.environment}-${var.aws_region}"
+  tags        = module.tags.tags
+  versioning  = true
 }
 
 output "name_prefix" {
-  value = local.name_prefix
+  value = module.naming.prefix
+}
+
+output "common_tags" {
+  value = module.tags.tags
+}
+
+output "bucket_id" {
+  value = module.bucket.bucket_id
 }
